@@ -19,7 +19,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier 
 from sklearn.ensemble import GradientBoostingClassifier 
 from sklearn.svm import SVC
-from sklearn.metrics import accuracy_score , precision_score, recall_score
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 
 pio.renderers.default = "browser" 
@@ -206,6 +206,10 @@ df_selected.corr(method = 'pearson')['Sales'].sort_values().plot(kind = 'bar')
 fig = plt.figure(figsize = (20,10))
 sns.heatmap(df_selected.corr(), annot = True , fmt = '.2f', cmap = 'magma')
 
+def tolerance_accuracy(y_true,y_pred,tolerance = 0.1):
+    return np.mean(np.abs((y_true-y_pred)/y_true)<= tolerance)
+
+
 # Machine Learning
 df_processed = df_selected.drop(columns =['Sales'])
 df_target = df_selected['Sales']
@@ -219,10 +223,14 @@ logistic_model.fit(X_train,y_train)
 y_pred_logistic = logistic_model.predict(X_test)
 
 # Performance Metrics
-acc_logistic = accuracy_score(y_test,y_pred_logistic)
-prec_logistic = precision_score(y_test, y_pred_logistic,average = 'weighted')  
-recall_logistic = recall_score(y_test, y_pred_logistic,average = 'weighted')        
-print(f"Logistic Regression - Accuracy: {acc_logistic * 100:.2f}%, Precision: {prec_logistic * 100:.2f}%, Recall: {recall_logistic * 100:.2f}%") 
+acc_logistic = tolerance_accuracy(y_test, y_pred_logistic)
+mae_logistic = mean_absolute_error(y_test, y_pred_logistic)
+mse_logistic = mean_squared_error(y_test, y_pred_logistic)
+rmse_logistic = np.sqrt(mse_logistic)
+r2_logistic = r2_score(y_test, y_pred_logistic)
+
+
+print(f"Logistic Regression - MAE: {mae_logistic:.2f}, MSE: {mse_logistic:.2f}, RMSE: {rmse_logistic:.2f}, R²: {r2_logistic:.2f}, Accuracy: {acc_logistic * 100:.2f}%")
 
 # Decision Tree 
   
@@ -233,45 +241,54 @@ tree_classifier.fit(X_train,y_train)
 y_pred_tree = tree_classifier.predict(X_test)
   
 # Performance Metrics
-acc_tree = accuracy_score(y_test,y_pred_tree)
-prec_tree = precision_score(y_test, y_pred_tree,average = 'weighted')  
-recall_tree = recall_score(y_test, y_pred_tree,average = 'weighted')        
-print(f"Decision Tree - Accuracy:{acc_tree * 100:.2f}%, Precision: {prec_tree * 100:.2f}%, Recall: {recall_tree * 100:.2f}%")  
+acc_tree = tolerance_accuracy(y_test, y_pred_tree)
+mae_tree = mean_absolute_error(y_test, y_pred_tree)
+mse_tree = mean_squared_error(y_test, y_pred_tree)
+rmse_tree = np.sqrt(mse_tree)
+r2_tree = r2_score(y_test, y_pred_tree)
+
+print(f"Decision Tree - MAE: {mae_tree:.2f}, MSE: {mse_tree:.2f}, RMSE: {rmse_tree:.2f}, R²: {r2_tree:.2f}, Accuracy: {acc_tree * 100:.2f}%") 
 
 # Linear Regression
 linear_model = LinearRegression()
 linear_model.fit(X_train, y_train)
 y_pred_continuous = linear_model.predict(X_test)
-threshold = 0.3
-y_pred_class = np.where(y_pred_continuous >= threshold, 1, 0)
 
-acc = accuracy_score(y_test, y_pred_class)
-prec = precision_score(y_test, y_pred_class, average='weighted',zero_division=0)
-recall = recall_score(y_test, y_pred_class, average='weighted',zero_division=0)
 
-print(f"Linear Regression - Accuracy: {acc * 100:.2f}%, Precision: {prec * 100:.2f}%, Recall: {recall* 100:.2f}%")
+acc_linear = tolerance_accuracy(y_test, y_pred_continuous)
+mae_linear = mean_absolute_error(y_test, y_pred_continuous)
+mse_linear = mean_squared_error(y_test, y_pred_continuous)
+rmse_linear = np.sqrt(mse_linear)
+r2_linear = r2_score(y_test, y_pred_continuous)
+
+print(f"Linear Regression - MAE: {mae_linear:.2f}, MSE: {mse_linear:.2f}, RMSE: {rmse_linear:.2f}, R²: {r2_linear:.2f}, Accuracy: {acc_linear * 100:.2f}%")
 
 #SVM 
-svm_model = SVC(random_state=42)
+svm_model = SVC(kernel='linear', random_state=42, max_iter=1000)
 svm_model.fit(X_train, y_train)
 y_pred_svm = svm_model.predict(X_test)
 
-accuracy_svm = accuracy_score(y_test, y_pred_svm)
-precision_svm = precision_score(y_test, y_pred_svm, average='weighted',zero_division=0)
-recall_svm = recall_score(y_test, y_pred_svm, average='weighted', zero_division=0)
 
-print(f"SVM - Accuracy: {accuracy_svm * 100:.2f}%, Precision: {precision_svm * 100:.2f}%, Recall: {recall_svm * 100:.2f}%")
+acc_svm = tolerance_accuracy(y_test, y_pred_svm)
+mae_svm = mean_absolute_error(y_test, y_pred_svm)
+mse_svm = mean_squared_error(y_test, y_pred_svm)
+rmse_svm = np.sqrt(mse_svm)
+r2_svm = r2_score(y_test, y_pred_svm)
+
+print(f"SVM - MAE: {mae_svm:.2f}, MSE: {mse_svm:.2f}, RMSE: {rmse_svm:.2f}, R²: {r2_svm:.2f}, Accuracy: {acc_svm * 100:.2f}%")
             
 #KNN
 knn_model = KNeighborsClassifier(n_neighbors=5)
 knn_model.fit(X_train, y_train)
 y_pred_knn = knn_model.predict(X_test)
 
-accuracy_knn = accuracy_score(y_test, y_pred_knn)
-precision_knn = precision_score(y_test, y_pred_knn, average='weighted')
-recall_knn = recall_score(y_test, y_pred_knn, average='weighted')
+acc_knn = tolerance_accuracy(y_test, y_pred_knn)
+mae_knn = mean_absolute_error(y_test, y_pred_knn)
+mse_knn = mean_squared_error(y_test, y_pred_knn)
+rmse_knn = np.sqrt(mse_knn)
+r2_knn = r2_score(y_test, y_pred_knn)
 
-print(f"KNN - Accuracy: {accuracy_knn * 100:.2f}%, Precision: {precision_knn * 100:.2f}%, Recall: {recall_knn * 100:.2f}%")
+print(f"KNN - MAE: {mae_knn:.2f}, MSE: {mse_knn:.2f}, RMSE: {rmse_knn:.2f}, R²: {r2_knn:.2f}, Accuracy: {acc_knn * 100:.2f}%")
 
 # Gradient Boosting Classifier
 gb_model = GradientBoostingClassifier(random_state=42)
@@ -279,11 +296,13 @@ gb_model.fit(X_train, y_train)
 #gb_model.fit(X_train, y_train)
 y_pred_gb = gb_model.predict(X_test)
 
-accuracy_gb = accuracy_score(y_test, y_pred_gb)
-precision_gb = precision_score(y_test, y_pred_gb, average='weighted')
-recall_gb = recall_score(y_test, y_pred_gb, average='weighted')
+acc_gb = tolerance_accuracy(y_test, y_pred_gb)
+mae_gb = mean_absolute_error(y_test, y_pred_gb)
+mse_gb = mean_squared_error(y_test, y_pred_gb)
+rmse_gb = np.sqrt(mse_gb)
+r2_gb = r2_score(y_test, y_pred_gb)
 
-print(f"Gradient Boosting - Accuracy: {accuracy_gb * 100:.2f}%, Precision: {precision_gb * 100:.2f}%, Recall: {recall_gb * 100:.2f}%")
+print(f"Gradient Boosting - MAE: {mae_gb:.2f}, MSE: {mse_gb:.2f}, RMSE: {rmse_gb:.2f}, R²: {r2_gb:.2f}, Accuracy: {acc_gb * 100:.2f}%")
 
 # Explainable AI-shap values
 def explainable_shapley(x,X_train,y_train,classifier_model):
@@ -296,9 +315,12 @@ def explainable_shapley(x,X_train,y_train,classifier_model):
     #Plotting shap summary 
     shap.summary_plot(shap_values[0],X_test,feature_names = feature_names)
     plt.gcf().set_size_inches(10,6)
+    plt.show()
+    
     shap.summary_plot(shap_values[0],X_test,feature_names = feature_names,plot_type = 'violin')
     plt.gcf().set_size_inches(10,6)
+    plt.show()
     
 explainable_shapley(df_processed,X_train,y_train,tree_classifier) 
-    
+
     
